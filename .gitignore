@@ -1,0 +1,5 @@
+*.o
+*.cmi
+*.cmo
+*.cmx
+game
