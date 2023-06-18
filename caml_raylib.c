@@ -83,3 +83,9 @@ CAMLprim value caml_get_render_height(value unit)
     CAMLreturn(Val_int(GetRenderHeight()));
     CAMLreturn(Val_unit);
 }
+
+CAMLprim value caml_is_key_pressed(value key)
+{
+    CAMLparam1(key);
+    CAMLreturn(Val_bool(IsKeyPressed(Int_val(key))));
+}

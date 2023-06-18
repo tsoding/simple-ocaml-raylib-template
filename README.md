@@ -14,5 +14,5 @@ For more info on OCaml-C Interop, read this entire 73 pages documents (it's simp
 
 ``` console
 $ ./build.sh
-$ ./game
+$ LD_LIBRARY_PATH=. ./game
 ```

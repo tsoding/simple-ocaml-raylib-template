@@ -2,5 +2,6 @@
 
 set -xe
 
-clang -c -I`ocamlc -where` `pkg-config --cflags raylib` caml_raylib.c
-ocamlopt caml_raylib.o ./raylib.ml ./main.ml -o game -cclib "`pkg-config --libs raylib`"
+clang -shared -fPIC -I`ocamlc -where` `pkg-config --cflags raylib` -o dllcaml_raylib.so caml_raylib.c `pkg-config --libs raylib`
+ocamlc -I +dynlink dynlink.cma ./raylib.ml ./game.ml ./main.ml -o game -dllib -lcaml_raylib
+ocamlc -c game_plug.ml
