@@ -18,7 +18,7 @@ let player_size = 100./.2.
 let player_color = red
 let gy = 2000.0
 let gx = 000.0
-let dampening = 0.75
+let collision_e = 0.75 (* https://en.wikipedia.org/wiki/Coefficient_of_restitution *)
 let friction = 0.9
 let jump_y = 1000.0
 let gun_length = 120.
@@ -147,12 +147,12 @@ let update (dt: float) (game: Game.t): Game.t =
   let ny = game.y +. game.dy*.dt in
   let game =
     if nx -. tank_width/.2. < 0. || nx +. tank_width/.2. >= width
-    then { game with dx = -.dampening*.game.dx }
+    then { game with dx = -.collision_e*.game.dx }
     else { game with x = nx }
   in
   let game =
     if ny -. tank_height < 0.
-    then { game with dy = -.dampening*.game.dy }
+    then { game with dy = -.collision_e*.game.dy }
     else { game with y = ny }
   in
   let game =
@@ -170,12 +170,12 @@ let update (dt: float) (game: Game.t): Game.t =
     let ny = proj.y +. proj.dy*.dt in
     let proj =
       if nx -. projectile_radius < 0. || nx +. projectile_radius >= width
-      then { proj with dx = -.dampening*.proj.dx }
+      then { proj with dx = -.collision_e*.proj.dx }
       else { proj with x = nx }
     in
     let proj =
       if ny -. projectile_radius < 0. || ny +. projectile_radius >= height
-      then { proj with dy = -.dampening*.proj.dy }
+      then { proj with dy = -.collision_e*.proj.dy }
       else { proj with y = ny }
     in
     let proj = { proj with lifetime = proj.lifetime-.dt }
