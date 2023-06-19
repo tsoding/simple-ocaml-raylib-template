@@ -6,6 +6,7 @@ module Projectile = struct
     ; y: float
     ; dx: float
     ; dy: float
+    ; lifetime: float
     }
 end
 

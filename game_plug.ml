@@ -19,21 +19,25 @@ let player_color = red
 let gy = 2000.0
 let gx = 000.0
 let dampening = 0.75
+let friction = 0.9
 let jump_y = 1000.0
 let gun_length = 120.
 let gun_girth = 20.
 let tank_width = 150.
 let tank_height = 80.
 let dome_radius = 50.
-let move_speed = 500.
+let move_speed = 250.
 let projectile_speed = 1000.0
 let projectile_radius = gun_girth/.2.
 let projectile_color = green
+let projectile_lifetime = 1.10
+let shockwave_distance = 500.
+let shockwave_impact = 2000.0
 
 let fresh (width: int) (height: int): Game.t =
   { x = (float_of_int width)/.2.
   ; y = (float_of_int height)/.2.
-  ; dx = 200.
+  ; dx = 0.
   ; dy = 100.
   ; mx = 0.
   ; projs = []
@@ -45,6 +49,7 @@ let spawn_projectile (game: Game.t) (position: Vector2.t) (velocity: Vector2.t):
     ; y = position.y
     ; dx = velocity.x
     ; dy = velocity.y
+    ; lifetime = projectile_lifetime
     }
   in
   { game with projs = new_proj :: game.projs }
@@ -154,7 +159,7 @@ let update (dt: float) (game: Game.t): Game.t =
     if ny >= height
     then { game with y = height
                    ; dy = 0.
-                   ; dx = 0. }
+                   ; dx = friction*.game.dx }
     else game
   in
   let update_proj (proj: Game.Projectile.t) =
@@ -173,10 +178,36 @@ let update (dt: float) (game: Game.t): Game.t =
       then { proj with dy = -.dampening*.proj.dy }
       else { proj with y = ny }
     in
+    let proj = { proj with lifetime = proj.lifetime-.dt }
+    in
     proj
   in
-  let game =
-    { game with projs = List.map update_proj game.projs }
+  let new_projs = game.projs |> List.map update_proj in
+  let alive_projs = new_projs |> List.filter (fun (proj: Game.Projectile.t) -> proj.lifetime > 0.) in
+  let dead_projs = new_projs |> List.filter (fun (proj: Game.Projectile.t) -> proj.lifetime <= 0.) in
+  let game = { game with projs = alive_projs} in
+  let f (proj: Game.Projectile.t): Vector2.t =
+    let dx = dome_center.x -. proj.x in
+    let dy = dome_center.y -. proj.y in
+    let d = sqrt (dx*.dx +. dy*.dy) in
+    if d > shockwave_distance then
+      { x = 0.; y = 0.}
+    else
+      let s = 1. -. d/.shockwave_distance in
+      let normal: Vector2.t =
+        { x = dx/.(d +. 0.001)
+        ; y = dy/.(d +. 0.001)
+        }
+      in
+      normal |> Vector2.scale (shockwave_impact *. s)
+  in
+  let force = dead_projs
+              |> List.map f
+              |> List.fold_left Vector2.add Vector2.zero
+  in
+  let game = {game with dx = game.dx +. force.x
+                      ; dy = game.dy +. force.y
+             }
   in
   begin_drawing ();
   let background = { r = 0x18; g = 0x18; b = 0x18; a = 0xFF } in

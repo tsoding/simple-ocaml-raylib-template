@@ -2,8 +2,9 @@ let () =
   let open Raylib in
   let plug_file_path = "game_plug.cmo" in
   Dynlink.loadfile_private plug_file_path;
-  let width = 800 in
-  let height = 600 in
+  let factor = 80 in
+  let width = 16*factor in
+  let height = 9*factor in
   let title = "Game" in
   init_window width height title;
   set_target_fps 60;

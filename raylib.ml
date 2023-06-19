@@ -22,6 +22,7 @@ module Vector2 = struct
     { x = a.x*.s
     ; y = a.y*.s
     }
+  let zero: t = {x = 0.; y = 0.}
 end
 
 module Rectangle = struct
