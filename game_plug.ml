@@ -18,19 +18,21 @@ let player_size = 100./.2.
 let player_color = red
 let gy = 2000.0
 let gx = 000.0
-let dampness = 0.75
+let dampening = 0.75
 let jump_y = 1000.0
 let gun_length = 120.
 let gun_girth = 20.
 let tank_width = 150.
 let tank_height = 80.
 let dome_radius = 50.
+let move_speed = 500.
 
-let fresh (): Game.t =
-  { x = 0.
-  ; y = 0.
-  ; dx = 100.
+let fresh (width: int) (height: int): Game.t =
+  { x = (float_of_int width)/.2.
+  ; y = (float_of_int height)/.2.
+  ; dx = 200.
   ; dy = 100.
+  ; mx = 0.
   }
 
 let update (game: Game.t) (dt: float): Game.t =
@@ -41,27 +43,41 @@ let update (game: Game.t) (dt: float): Game.t =
       { game with dy = game.dy -. jump_y
       }
     else if 'Q' |> Char.code |> is_key_pressed then
-      { x = width/.2.
-      ; y = height/.2.
-      ; dx = 200.
-      ; dy = 100.
-      }
+      fresh (get_render_width ()) (get_render_height ())
     else
       game
   in
+  let game =
+    if 'A' |> Char.code |> is_key_down then
+      { game with mx = -.move_speed }
+    else
+      { game with mx = 0. }
+  in
+  let game =
+    if 'D' |> Char.code |> is_key_down then
+      { game with mx = game.mx +. move_speed }
+    else game
+  in
   let game = { game with dx = game.dx +. gx*.dt
                        ; dy = game.dy +. gy*.dt } in
-  let nx = game.x +. game.dx*.dt in
+  let nx = game.x +. (game.dx +. game.mx)*.dt in
   let ny = game.y +. game.dy*.dt in
   let game =
     if nx -. tank_width/.2. < 0. || nx +. tank_width/.2. >= width
-    then { game with dx = -.dampness*.game.dx }
+    then { game with dx = -.dampening*.game.dx }
     else { game with x = nx }
   in
   let game =
-    if ny -. tank_height < 0. || ny >= height
-    then { game with dy = -.dampness*.game.dy }
+    if ny -. tank_height < 0.
+    then { game with dy = -.dampening*.game.dy }
     else { game with y = ny }
+  in
+  let game =
+    if ny >= height
+    then { game with y = height
+                   ; dy = 0.
+                   ; dx = 0. }
+    else game
   in
   game
 

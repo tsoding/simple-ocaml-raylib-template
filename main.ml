@@ -21,5 +21,5 @@ let () =
        let game = Game.plug.update game dt in
        Game.plug.render game;
        loop game
-  in Game.plug.fresh () |> loop;
+  in Game.plug.fresh width height |> loop;
   close_window()

@@ -108,6 +108,12 @@ CAMLprim value caml_is_key_pressed(value key)
     CAMLreturn(Val_bool(IsKeyPressed(Int_val(key))));
 }
 
+CAMLprim value caml_is_key_down(value key)
+{
+    CAMLparam1(key);
+    CAMLreturn(Val_bool(IsKeyDown(Int_val(key))));
+}
+
 CAMLprim value caml_draw_circle(value x, value y, value radius, value color)
 {
     CAMLparam4(x, y, radius, color);
