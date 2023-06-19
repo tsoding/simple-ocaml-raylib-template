@@ -10,9 +10,11 @@ For more info on OCaml-C Interop, read this entire 73 pages documents (it's simp
 - [Raylib](https://www.raylib.com/)
 - [Clang](https://clang.llvm.org/)
 
+*Tested only on Linux*
+
 ## Quick Start
 
 ``` console
 $ ./build.sh
-$ LD_LIBRARY_PATH=. ./game
+$ ./game
 ```
