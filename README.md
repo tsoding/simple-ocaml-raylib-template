@@ -4,6 +4,12 @@ Intentionally simple Raylib OCaml Template. Not using [dune](https://github.com/
 
 For more info on OCaml-C Interop, read this entire 73 pages documents (it's simple, you can do that in a couple of hours): https://v2.ocaml.org/manual/intfc.html
 
+## Hot Reloading
+
+![hotreload](./hotreload.gif)
+
+Hot Reloading mechanism is based upon [Dynlink](https://v2.ocaml.org/api/Dynlink.html) module from Stdlib. You can only Hot Reload [game_plug.ml](./game_plug.ml) module. To hot reload the module press <kbd>R</kbd> during the execution.
+
 ## Dependencies
 
 - [OCaml 5.0.0](https://ocaml.org/install)
@@ -18,7 +24,3 @@ For more info on OCaml-C Interop, read this entire 73 pages documents (it's simp
 $ ./build.sh
 $ ./game
 ```
-
-## Hot Reloading
-
-Hot Reloading mechanism is based upon [Dynlink](https://v2.ocaml.org/api/Dynlink.html) module from Stdlib. You can only Hot Reload [game_plug.ml](./game_plug.ml) module. To hot reload the module press <kbd>R</kbd> during the execution.
