@@ -35,3 +35,6 @@ external draw_rectangle_pro : Rectangle.t -> Vector2.t -> float -> color -> unit
 
 external is_key_pressed: int -> bool = "caml_is_key_pressed"
 external is_key_down: int -> bool = "caml_is_key_down"
+
+external get_mouse_x: unit -> int = "caml_get_mouse_x"
+external get_mouse_y: unit -> int = "caml_get_mouse_y"

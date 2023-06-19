@@ -92,7 +92,7 @@ let render_gun (pivot: Vector2.t) (rotation: float): unit =
   let origin: Vector2.t = { x = 0.; y = gun_girth/.2. } in
   draw_rectangle_pro rectangle origin rotation red
 
-let render_tank (position: Vector2.t): unit =
+let render_tank (position: Vector2.t) (rotation: float): unit =
   draw_rectangle
     (int_of_float (position.x -. tank_width/.2.))
     (int_of_float (position.y -. tank_height))
@@ -109,18 +109,30 @@ let render_tank (position: Vector2.t): unit =
     (int_of_float dome_center.y)
     dome_radius
     red;
-  render_gun dome_center (-.0.)
+  render_gun dome_center rotation
 
 let render (game: Game.t) =
   begin_drawing ();
   let background = { r = 0x18; g = 0x18; b = 0x18; a = 0xFF } in
   clear_background background;
-  let pivot: Vector2.t =
+  let position: Vector2.t =
     { x = game.x
     ; y = game.y
     }
   in
-  render_tank pivot;
+  let dome_center: Vector2.t =
+    { x = position.x
+    ; y = position.y -. tank_height
+    }
+  in
+  let mouse_x = get_mouse_x () |> float_of_int in
+  let mouse_y = get_mouse_y () |> float_of_int in
+  let vx = mouse_x -. dome_center.x in
+  let vy = mouse_y -. dome_center.y in
+  let rads = atan2 vy vx in
+  let degrees = rads/.Float.pi*.180.0 in
+  render_tank position degrees;
+  draw_circle (get_mouse_x ()) (get_mouse_y ()) 15. green;
   end_drawing ()
 
 let () =

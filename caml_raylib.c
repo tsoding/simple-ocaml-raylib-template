@@ -131,3 +131,15 @@ CAMLprim value caml_draw_rectangle_pro(value rec, value origin, value rotation, 
         color_of_value(color));
     CAMLreturn(Val_unit);
 }
+
+CAMLprim value caml_get_mouse_x(value unit)
+{
+    CAMLparam1(unit);
+    CAMLreturn(Val_int(GetMouseX()));
+}
+
+CAMLprim value caml_get_mouse_y(value unit)
+{
+    CAMLparam1(unit);
+    CAMLreturn(Val_int(GetMouseY()));
+}
