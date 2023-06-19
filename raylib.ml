@@ -12,6 +12,14 @@ let red: color =
   ; a = 255
   }
 
+module Vector2 = struct
+  type t = { x: float; y: float }
+end
+
+module Rectangle = struct
+  type t = { x: float; y: float; width: float; height: float }
+end
+
 external init_window: int -> int -> string -> unit = "caml_init_window"
 external set_target_fps: int -> unit = "caml_set_target_fps"
 external window_should_close: unit -> bool = "caml_window_should_close"
@@ -23,3 +31,5 @@ external draw_rectangle: int -> int -> int -> int -> color -> unit = "caml_draw_
 external get_render_width: unit -> int = "caml_get_render_width"
 external get_render_height: unit -> int = "caml_get_render_height"
 external is_key_pressed: int -> bool = "caml_is_key_pressed"
+external draw_circle : int -> int -> float -> color -> unit = "caml_draw_circle"
+external draw_rectangle_pro : Rectangle.t -> Vector2.t -> float -> color -> unit = "caml_draw_rectangle_pro"
