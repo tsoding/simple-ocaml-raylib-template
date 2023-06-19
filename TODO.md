@@ -3,7 +3,7 @@
 - [x] Tank rendering
 - [x] Tank movement
 - [x] Gun movement
-- [ ] Shooting projectiles
+- [x] Shooting projectiles
 - [ ] Projectiles Shockwave
 - [ ] Health (Collectable hearts/repair kits)
 

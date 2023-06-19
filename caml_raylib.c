@@ -143,3 +143,9 @@ CAMLprim value caml_get_mouse_y(value unit)
     CAMLparam1(unit);
     CAMLreturn(Val_int(GetMouseY()));
 }
+
+CAMLprim value caml_is_mouse_button_pressed(value button)
+{
+    CAMLparam1(button);
+    CAMLreturn(Val_bool(IsMouseButtonPressed(Int_val(button))));
+}

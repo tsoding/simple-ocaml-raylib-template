@@ -18,8 +18,6 @@ let () =
            flush stdout
          end;
        let dt = 0.016 in
-       let game = Game.plug.update game dt in
-       Game.plug.render game;
-       loop game
+       game |> Game.plug.update dt |> loop
   in Game.plug.fresh width height |> loop;
   close_window()

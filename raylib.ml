@@ -14,6 +14,14 @@ let red: color =
 
 module Vector2 = struct
   type t = { x: float; y: float }
+  let add (a: t) (b: t): t =
+    { x = a.x +. b.x
+    ; y = a.y +. b.y
+    }
+  let scale (s: float) (a: t): t =
+    { x = a.x*.s
+    ; y = a.y*.s
+    }
 end
 
 module Rectangle = struct
@@ -38,3 +46,5 @@ external is_key_down: int -> bool = "caml_is_key_down"
 
 external get_mouse_x: unit -> int = "caml_get_mouse_x"
 external get_mouse_y: unit -> int = "caml_get_mouse_y"
+
+external is_mouse_button_pressed: int -> bool = "caml_is_mouse_button_pressed"
