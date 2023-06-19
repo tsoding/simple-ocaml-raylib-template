@@ -59,6 +59,7 @@ let render (game: Game.t) =
   end_drawing ()
 
 let () =
+  (* Registering hot reloaded functions *)
   Game.plug.fresh <- fresh;
   Game.plug.update <- update;
   Game.plug.render <- render
