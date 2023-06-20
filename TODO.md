@@ -6,7 +6,7 @@
 - [x] Shooting projectiles
 - [x] Projectiles Shockwave
 
-- [ ] Infinite Space with Camera
+- [x] Infinite Space with Camera
 - [ ] Platforms
 - [ ] Health (Collectable hearts/repair kits)
 

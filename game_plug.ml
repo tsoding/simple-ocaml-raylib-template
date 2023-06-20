@@ -21,11 +21,9 @@ let shockwave_impact = 2000.0
 let shockwave_color = green
 let explosion_duration = 0.25
 
-let fresh (width: int) (height: int): Game.t =
-  let w = float_of_int width in
-  let h = float_of_int height in
+let fresh (): Game.t =
   let open Vector2 in
-  { pos = vec2 w h /^ scalar 2.
+  { pos = vec2 0. (-.300.)
   ; vel = vec2 0. 100.
   ; mov = scalar 0.
   ; projs = []
@@ -79,10 +77,22 @@ let update (dt: float) (game: Game.t): Game.t =
   let open Vector2 in
 
   (* Computable parameters of the game *)
-  let mouse = ivec2 (get_mouse_x ()) (get_mouse_y ()) in
   let res = ivec2 (get_render_width ()) (get_render_height ()) in
   let dome_center = game.pos -^ vec2 0. tank_height in
-  let gun_rotation_rads = dir (mouse -^ dome_center) in
+
+  let camera: Camera2D.t =
+    { offset = ~^ (dome_center  -^ res/^scalar 2.)
+    ; zoom = 1.
+    }
+  in
+
+  let mouse_screen = ivec2 (get_mouse_x ()) (get_mouse_y ()) in
+  let mouse_world = get_screen_to_world2d mouse_screen camera in
+
+  (* Printf.printf "%f %f\n" mouse_world.x mouse_world.y; *)
+  (* flush stdout; *)
+
+  let gun_rotation_rads = dir (mouse_world -^ dome_center) in
   let gun_rotation_degrees = gun_rotation_rads/.Float.pi*.180.0 in
 
   (* Tank Controls *)
@@ -90,7 +100,7 @@ let update (dt: float) (game: Game.t): Game.t =
     (* Reset the state of the game *)
     let game =
       if 'Q' |> Char.code |> is_key_pressed
-      then fresh (get_render_width ()) (get_render_height ())
+      then fresh ()
       else game
     in
 
@@ -142,8 +152,8 @@ let update (dt: float) (game: Game.t): Game.t =
 
     (* Bottom collision *)
     let game =
-      if game.pos.y >= res.y
-      then { game with pos = { game.pos with y = res.y }
+      if game.pos.y >= 0.
+      then { game with pos = { game.pos with y = 0. }
                      ; vel = game.vel *^ vec2 friction 0.
            }
       else game
@@ -156,7 +166,7 @@ let update (dt: float) (game: Game.t): Game.t =
     let open Vector2 in
     let proj = { proj with vel = proj.vel +^ gravity*^scalar dt } in
     let proj = { proj with pos = proj.pos +^ proj.vel*^scalar dt } in
-    let proj = { proj with lifetime = if proj.pos.y +. projectile_radius >= res.y
+    let proj = { proj with lifetime = if proj.pos.y +. projectile_radius >= 0.
                                       then 0.
                                       else proj.lifetime -. dt }
     in
@@ -208,20 +218,23 @@ let update (dt: float) (game: Game.t): Game.t =
 
   (* Rendering the state of the game *)
   begin_drawing ();
-  let background = { r = 0x18; g = 0x18; b = 0x18; a = 0xFF } in
-  clear_background background;
-  game.projs
-  |> List.iter (fun (proj: Game.Projectile.t) ->
-         let x = proj.pos.x |> int_of_float in
-         let y = proj.pos.y |> int_of_float in
-         draw_circle x y projectile_radius projectile_color);
-  game.explosions
-  |> List.iter (fun (explosion: Game.Explosion.t) ->
-       let x = explosion.pos.x |> int_of_float in
-       let y = explosion.pos.y |> int_of_float in
-       let r = shockwave_distance*.0.5*.explosion.progress in
-       draw_circle x y r shockwave_color);
-  render_tank game.pos gun_rotation_degrees;
+    let background = { r = 0x18; g = 0x18; b = 0x18; a = 0xFF } in
+    clear_background background;
+    begin_mode_2d camera;
+      game.projs
+      |> List.iter (fun (proj: Game.Projectile.t) ->
+             let x = proj.pos.x |> int_of_float in
+             let y = proj.pos.y |> int_of_float in
+             draw_circle x y projectile_radius projectile_color);
+      game.explosions
+      |> List.iter (fun (explosion: Game.Explosion.t) ->
+           let x = explosion.pos.x |> int_of_float in
+           let y = explosion.pos.y |> int_of_float in
+           let r = shockwave_distance*.0.5*.explosion.progress in
+           draw_circle x y r shockwave_color);
+      render_tank game.pos gun_rotation_degrees;
+      draw_rectangle 0 0 100 100 blue;
+    end_mode_2d ();
   end_drawing ();
   game
 

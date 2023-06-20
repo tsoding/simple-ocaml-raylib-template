@@ -13,6 +13,10 @@ module Vector2 = struct
   type t = { x: float; y: float }
   let ivec2 x y = { x = float_of_int x; y = float_of_int y }
   let vec2 x y = { x; y }
+  let ( ~^ ) (a: t): t =
+    { x = -.a.x
+    ; y = -.a.y
+    }
   let ( -^ ) (a: t) (b: t): t =
     { x = a.x -. b.x
     ; y = a.y -. b.y
@@ -35,6 +39,13 @@ module Vector2 = struct
     sqrt (v.x*.v.x +. v.y*.v.y)
   let dir (v: t): float =
     atan2 v.y v.x
+end
+
+module Camera2D = struct
+  type t =
+    { offset: Vector2.t
+    ; zoom: float
+    }
 end
 
 module Rectangle = struct
@@ -61,3 +72,8 @@ external get_mouse_x: unit -> int = "caml_get_mouse_x"
 external get_mouse_y: unit -> int = "caml_get_mouse_y"
 
 external is_mouse_button_pressed: int -> bool = "caml_is_mouse_button_pressed"
+
+external begin_mode_2d: Camera2D.t -> unit = "caml_begin_mode_2d"
+external end_mode_2d: unit -> unit = "caml_end_mode_2d"
+
+external get_screen_to_world2d: Vector2.t -> Camera2D.t -> Vector2.t = "caml_get_screen_to_world2d"

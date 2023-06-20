@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
+#include <caml/alloc.h>
 
 #include <raylib.h>
 
@@ -55,6 +56,14 @@ Vector2 vector2_of_value(value v)
     vec2.x = Double_field(v, 0);
     vec2.y = Double_field(v, 1);
     return vec2;
+}
+
+Camera2D camera2d_of_value(value v)
+{
+    Camera2D camera = { 0 };
+    camera.offset = vector2_of_value(Field(v, 0));
+    camera.zoom = Double_val(Field(v, 1));
+    return camera;
 }
 
 Rectangle rectangle_of_value(value v)
@@ -148,4 +157,31 @@ CAMLprim value caml_is_mouse_button_pressed(value button)
 {
     CAMLparam1(button);
     CAMLreturn(Val_bool(IsMouseButtonPressed(Int_val(button))));
+}
+
+CAMLprim value caml_begin_mode_2d(value camera)
+{
+    CAMLparam1(camera);
+    Camera2D c = camera2d_of_value(camera);
+    BeginMode2D(c);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value caml_end_mode_2d(value unit)
+{
+    CAMLparam1(unit);
+    EndMode2D();
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value caml_get_screen_to_world2d(value position, value camera)
+{
+    CAMLparam2(position, camera);
+    CAMLlocal1(result);
+
+    Vector2 position1 = GetScreenToWorld2D(vector2_of_value(position), camera2d_of_value(camera));
+    result = caml_alloc_float_array(2);
+    Store_double_field(result, 0, position1.x);
+    Store_double_field(result, 1, position1.y);
+    CAMLreturn(result);
 }

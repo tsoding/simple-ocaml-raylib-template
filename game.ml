@@ -24,13 +24,13 @@ type t =
   }
 
 type plug_t =
-  { mutable fresh: int -> int -> t
+  { mutable fresh: unit -> t
   ; mutable update: float -> t -> t
   }
 
 exception Plugin_not_loaded
 
 let plug =
-  { fresh = (fun _ _ -> raise Plugin_not_loaded)
+  { fresh = (fun _ -> raise Plugin_not_loaded)
   ; update = (fun _ _ -> raise Plugin_not_loaded)
   }

@@ -20,5 +20,5 @@ let () =
          end;
        let dt = 0.016 in
        game |> Game.plug.update dt |> loop
-  in Game.plug.fresh width height |> loop;
+  in Game.plug.fresh () |> loop;
   close_window()
