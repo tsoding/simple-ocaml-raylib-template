@@ -7,7 +7,7 @@
 - [x] Projectiles Shockwave
 
 - [x] Infinite Space with Camera
-- [ ] Platforms
+- [x] Platforms
 - [ ] Health (Collectable hearts/repair kits)
 
 - [ ] Destroyable platforms

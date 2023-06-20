@@ -20,6 +20,30 @@ let shockwave_distance = 500.
 let shockwave_impact = 2000.0
 let shockwave_color = green
 let explosion_duration = 0.25
+let platform_color = blue
+
+let platforms: Rectangle.t list =
+  let s = 100. in
+  [ { x = 0.; y = 0.; width = s; height = s }
+  ; { x = s +. s; y = -. s *. 4.; width = s *. 5.; height = s }
+  ; { x = s *. 5.; y = -. s *. 8.; width = s *. 5.; height = s }
+  ]
+
+let rectangle_sides (a: Rectangle.t): (float * float * float * float) =
+  let l = a.x in
+  let r = a.x +. a.width in
+  let t = a.y in
+  let b = a.y +. a.height in
+  l, r, t, b
+
+let rectangle_overlap (a: Rectangle.t) (b: Rectangle.t): bool =
+  let l1, r1, t1, b1 = rectangle_sides a in
+  let l2, r2, t2, b2 = rectangle_sides b in
+  r1 >= l2 && r2 >= l1 && b1 >= t2 && b2 >= t1
+
+let rectangle_contains (p: Vector2.t) (r: Rectangle.t): bool =
+  let l, r, t, b = rectangle_sides r in
+  l <= p.x && p.x <= r && t <= p.y && p.y <= b
 
 let fresh (): Game.t =
   let open Vector2 in
@@ -72,6 +96,13 @@ let render_tank (position: Vector2.t) (rotation: float): unit =
     dome_radius
     red;
   render_gun dome_center rotation
+
+let tank_hitbox_at (pos: Vector2.t): Rectangle.t =
+  { x = pos.x -. tank_width/.2.
+  ; y = pos.y -. tank_height
+  ; width = tank_width
+  ; height = tank_height
+  }
 
 let update (dt: float) (game: Game.t): Game.t =
   let open Vector2 in
@@ -146,8 +177,22 @@ let update (dt: float) (game: Game.t): Game.t =
       { game with vel = game.vel +^ gravity*^scalar dt }
     in
 
+    let pos1 = game.pos +^ (game.vel +^ game.mov)*^scalar dt in
+
+    let horz_collis = List.exists (rectangle_overlap (vec2 pos1.x game.pos.y |> tank_hitbox_at)) platforms in
     let game =
-      { game with pos = game.pos +^ (game.vel +^ game.mov)*^scalar dt }
+      if horz_collis then
+        { game with vel = game.vel *^ vec2 0. friction }
+      else
+        { game with pos = { game.pos with x = pos1.x } }
+    in
+
+    let vert_collis = List.exists (rectangle_overlap (vec2 game.pos.x pos1.y |> tank_hitbox_at)) platforms in
+    let game =
+      if vert_collis then
+        { game with vel = game.vel *^ vec2 friction 0. }
+      else
+        { game with pos = { game.pos with y = pos1.y } }
     in
 
     (* Bottom collision *)
@@ -166,7 +211,7 @@ let update (dt: float) (game: Game.t): Game.t =
     let open Vector2 in
     let proj = { proj with vel = proj.vel +^ gravity*^scalar dt } in
     let proj = { proj with pos = proj.pos +^ proj.vel*^scalar dt } in
-    let proj = { proj with lifetime = if proj.pos.y +. projectile_radius >= 0.
+    let proj = { proj with lifetime = if proj.pos.y >= 0. || (List.exists (rectangle_contains proj.pos) platforms)
                                       then 0.
                                       else proj.lifetime -. dt }
     in
@@ -233,7 +278,13 @@ let update (dt: float) (game: Game.t): Game.t =
            let r = shockwave_distance*.0.5*.explosion.progress in
            draw_circle x y r shockwave_color);
       render_tank game.pos gun_rotation_degrees;
-      draw_rectangle 0 0 100 100 blue;
+      platforms
+      |> List.iter (fun (platform: Rectangle.t) ->
+           let x = platform.x |> int_of_float in
+           let y = platform.y |> int_of_float in
+           let w = platform.width |> int_of_float in
+           let h = platform.height |> int_of_float in
+           draw_rectangle x y w h platform_color);
     end_mode_2d ();
   end_drawing ();
   game
