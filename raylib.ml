@@ -11,6 +11,11 @@ let blue = { r = 0 ; g = 121 ; b = 241 ; a = 255 }
 
 module Vector2 = struct
   type t = { x: float; y: float }
+  let vec2 x y = { x; y }
+  let ( -^ ) (a: t) (b: t): t =
+    { x = a.x -. b.x
+    ; y = a.y -. b.y
+    }
   let ( +^ ) (a: t) (b: t): t =
     { x = a.x +. b.x
     ; y = a.y +. b.y
@@ -19,8 +24,14 @@ module Vector2 = struct
     { x = a.x *. b.x
     ; y = a.y *. b.y
     }
+  let ( /^ ) (a: t) (b: t): t =
+    { x = a.x /. b.x
+    ; y = a.y /. b.y
+    }
   let scalar (s: float): t =
     { x = s; y = s }
+  let length (v: t): float =
+    sqrt (v.x*.v.x +. v.y*.v.y)
 end
 
 module Rectangle = struct

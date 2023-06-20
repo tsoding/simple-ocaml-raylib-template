@@ -4,6 +4,7 @@ let player_size = 100./.2.
 let player_color = red
 let gy = 2000.0
 let gx = 000.0
+let gravity: Vector2.t = { x = gx; y = gy }
 let dumpling = 0.75
 let friction = 0.9
 let jump_y = 1000.0
@@ -32,19 +33,17 @@ let fresh (width: int) (height: int): Game.t =
   ; explosions = []
   }
 
-let spawn_projectile (game: Game.t) (position: Vector2.t) (velocity: Vector2.t): Game.t =
+let spawn_projectile (game: Game.t) (pos: Vector2.t) (vel: Vector2.t): Game.t =
   let new_proj: Game.Projectile.t =
-    { x = position.x
-    ; y = position.y
-    ; dx = velocity.x
-    ; dy = velocity.y
+    { pos
+    ; vel
     ; lifetime = projectile_lifetime
     }
   in
   { game with projs = new_proj :: game.projs }
 
-let spawn_explosion (game: Game.t) (position: Vector2.t): Game.t =
-  let new_explosion: Game.Explosion.t = { position; progress = 1. } in
+let spawn_explosion (game: Game.t) (pos: Vector2.t): Game.t =
+  let new_explosion: Game.Explosion.t = { pos; progress = 1. } in
   { game with explosions = new_explosion :: game.explosions }
 
 let render_gun (pivot: Vector2.t) (rotation: float): unit =
@@ -177,23 +176,20 @@ let update (dt: float) (game: Game.t): Game.t =
   in
 
   let update_proj (proj: Game.Projectile.t): Game.Projectile.t =
-    let proj = { proj with dx = proj.dx +. gx*.dt
-                         ; dy = proj.dy +. gy*.dt }
-    in
-    let nx = proj.x +. proj.dx*.dt in
-    let ny = proj.y +. proj.dy*.dt in
+    let open Vector2 in
+    let proj = { proj with vel = proj.vel +^ gravity*^scalar dt } in
+    let pos1 = proj.pos +^ proj.vel*^scalar dt in
     let proj =
-      if nx -. projectile_radius < 0. || nx +. projectile_radius >= width
-      then { proj with dx = -.dumpling*.proj.dx; lifetime = 0. }
-      else { proj with x = nx }
+      if pos1.x -. projectile_radius < 0. || pos1.x +. projectile_radius >= width
+      then { proj with vel = proj.vel *^ vec2 (-.dumpling) 1.; lifetime = 0. }
+      else { proj with pos = { proj.pos with x = pos1.x } }
     in
     let proj =
-      if ny -. projectile_radius < 0. || ny +. projectile_radius >= height
-      then { proj with dy = -.dumpling*.proj.dy; lifetime = 0. }
-      else { proj with y = ny }
+      if pos1.y -. projectile_radius < 0. || pos1.y +. projectile_radius >= height
+      then { proj with vel = proj.vel *^ vec2 1. (-.dumpling); lifetime = 0. }
+      else { proj with pos = { proj.pos with y = pos1.y } }
     in
-    let proj = { proj with lifetime = proj.lifetime-.dt }
-    in
+    let proj = { proj with lifetime = proj.lifetime-.dt } in
     proj
   in
   let new_projs = game.projs |> List.map update_proj in
@@ -201,20 +197,15 @@ let update (dt: float) (game: Game.t): Game.t =
   let dead_projs = new_projs |> List.filter (fun (proj: Game.Projectile.t) -> proj.lifetime <= 0.) in
   let game = { game with projs = alive_projs } in
   let exploded_projectile_force (proj: Game.Projectile.t): Vector2.t =
-    let dx = dome_center.x -. proj.x in
-    let dy = dome_center.y -. proj.y in
-    let d = sqrt (dx*.dx +. dy*.dy) in
-    if d > shockwave_distance then
+    let open Vector2 in
+    let direction = dome_center -^ proj.pos in
+    let distance = length direction in
+    if distance > shockwave_distance then
       { x = 0.; y = 0.}
     else
-      let s = 1. -. d/.shockwave_distance in
-      let normal: Vector2.t =
-        { x = dx/.(d +. 0.001)
-        ; y = dy/.(d +. 0.001)
-        }
-      in
-      let open Vector2 in
-      normal *^ scalar (shockwave_impact *. s)
+      let s = 1. -. distance/.shockwave_distance in
+      let eps = 0.001 in        (* to prevent the division by distance == 0 *)
+      direction /^ scalar (distance +. eps) *^ scalar (shockwave_impact *. s)
   in
   let force =
     let open Vector2 in
@@ -229,7 +220,7 @@ let update (dt: float) (game: Game.t): Game.t =
 
   let game =
     let explosion_from_proj (proj: Game.Projectile.t): Game.Explosion.t =
-      { position = { x = proj.x; y = proj.y }
+      { pos = proj.pos
       ; progress = 1.
       }
     in
@@ -254,13 +245,13 @@ let update (dt: float) (game: Game.t): Game.t =
   clear_background background;
   game.projs
   |> List.iter (fun (proj: Game.Projectile.t) ->
-         let x = proj.x |> int_of_float in
-         let y = proj.y |> int_of_float in
+         let x = proj.pos.x |> int_of_float in
+         let y = proj.pos.y |> int_of_float in
          draw_circle x y projectile_radius projectile_color);
   game.explosions
   |> List.iter (fun (explosion: Game.Explosion.t) ->
-       let x = explosion.position.x |> int_of_float in
-       let y = explosion.position.y |> int_of_float in
+       let x = explosion.pos.x |> int_of_float in
+       let y = explosion.pos.y |> int_of_float in
        let r = shockwave_distance*.0.5*.explosion.progress in
        draw_circle x y r shockwave_color);
   render_tank tank_position gun_rotation_degrees;

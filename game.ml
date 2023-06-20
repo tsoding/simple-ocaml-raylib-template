@@ -2,17 +2,15 @@ open Raylib
 
 module Projectile = struct
   type t =
-    { x: float
-    ; y: float
-    ; dx: float
-    ; dy: float
+    { pos: Vector2.t
+    ; vel: Vector2.t
     ; lifetime: float
     }
 end
 
 module Explosion = struct
   type t =
-    { position: Vector2.t
+    { pos: Vector2.t
     ; progress: float
     }
 end
