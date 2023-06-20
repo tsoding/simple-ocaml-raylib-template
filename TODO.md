@@ -6,8 +6,9 @@
 - [x] Shooting projectiles
 - [x] Projectiles Shockwave
 
-## Additional Mechanics
-
-- [ ] Health (Collectable hearts/repair kits)
+- [ ] Infinite Space with Camera
 - [ ] Platforms
+- [ ] Health (Collectable hearts/repair kits)
+
 - [ ] Destroyable platforms
+- [ ] Mines
