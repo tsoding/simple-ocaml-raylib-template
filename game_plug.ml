@@ -2,9 +2,7 @@ open Raylib
 
 let player_size = 100./.2.
 let player_color = red
-let gy = 2000.0
-let gx = 000.0
-let gravity: Vector2.t = { x = gx; y = gy }
+let gravity = Vector2.vec2 0. 2000.
 let dumpling = 0.75
 let friction = 0.9
 let jump_y = 1000.0
