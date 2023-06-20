@@ -132,23 +132,17 @@ let update (dt: float) (game: Game.t): Game.t =
 
   (* Tank Physics *)
   let game =
-    let game = { game with vel = game.vel +^ gravity*^scalar dt } in
-    let pos1 = game.pos +^ (game.vel +^ game.mov)*^scalar dt in
-
     let game =
-      if pos1.x -. tank_width/.2. < 0. || pos1.x +. tank_width/.2. >= res.x
-      then { game with vel = { game.vel with x = -.dumpling*.game.vel.x } }
-      else { game with pos = vec2 pos1.x game.pos.y }
+      { game with vel = game.vel +^ gravity*^scalar dt }
     in
 
     let game =
-      if pos1.y -. tank_height < 0.
-      then { game with vel = { game.vel with y = -.dumpling*.game.vel.y } }
-      else { game with pos = vec2 game.pos.x pos1.y }
+      { game with pos = game.pos +^ (game.vel +^ game.mov)*^scalar dt }
     in
 
+    (* Bottom collision *)
     let game =
-      if pos1.y >= res.y
+      if game.pos.y >= res.y
       then { game with pos = { game.pos with y = res.y }
                      ; vel = game.vel *^ vec2 friction 0.
            }
@@ -161,18 +155,11 @@ let update (dt: float) (game: Game.t): Game.t =
   let update_proj (proj: Game.Projectile.t): Game.Projectile.t =
     let open Vector2 in
     let proj = { proj with vel = proj.vel +^ gravity*^scalar dt } in
-    let pos1 = proj.pos +^ proj.vel*^scalar dt in
-    let proj =
-      if pos1.x -. projectile_radius < 0. || pos1.x +. projectile_radius >= res.x
-      then { proj with vel = proj.vel *^ vec2 (-.dumpling) 1.; lifetime = 0. }
-      else { proj with pos = { proj.pos with x = pos1.x } }
+    let proj = { proj with pos = proj.pos +^ proj.vel*^scalar dt } in
+    let proj = { proj with lifetime = if proj.pos.y +. projectile_radius >= res.y
+                                      then 0.
+                                      else proj.lifetime -. dt }
     in
-    let proj =
-      if pos1.y -. projectile_radius < 0. || pos1.y +. projectile_radius >= res.y
-      then { proj with vel = proj.vel *^ vec2 1. (-.dumpling); lifetime = 0. }
-      else { proj with pos = { proj.pos with y = pos1.y } }
-    in
-    let proj = { proj with lifetime = proj.lifetime-.dt } in
     proj
   in
   let new_projs = game.projs |> List.map update_proj in
