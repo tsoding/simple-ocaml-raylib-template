@@ -16,7 +16,7 @@ let move_speed = 250.
 let projectile_speed = 1000.0
 let projectile_radius = gun_girth/.2.
 let projectile_color = green
-let projectile_lifetime = 1.10
+let projectile_lifetime = 2.
 let shockwave_distance = 500.
 let shockwave_impact = 2000.0
 let shockwave_color = green
@@ -183,12 +183,12 @@ let update (dt: float) (game: Game.t): Game.t =
     let ny = proj.y +. proj.dy*.dt in
     let proj =
       if nx -. projectile_radius < 0. || nx +. projectile_radius >= width
-      then { proj with dx = -.dampening*.proj.dx }
+      then { proj with dx = -.dampening*.proj.dx; lifetime = 0. }
       else { proj with x = nx }
     in
     let proj =
       if ny -. projectile_radius < 0. || ny +. projectile_radius >= height
-      then { proj with dy = -.dampening*.proj.dy }
+      then { proj with dy = -.dampening*.proj.dy; lifetime = 0. }
       else { proj with y = ny }
     in
     let proj = { proj with lifetime = proj.lifetime-.dt }
