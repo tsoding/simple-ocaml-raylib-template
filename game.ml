@@ -21,6 +21,7 @@ type t =
   ; mov: Vector2.t
   ; projs: Projectile.t list
   ; explosions: Explosion.t list
+  ; health: float
   }
 
 type plug_t =

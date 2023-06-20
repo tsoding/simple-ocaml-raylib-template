@@ -1,5 +1,7 @@
 open Raylib
 
+let gray = { r = 130; g = 130; b = 130; a = 255}
+
 let player_size = 100./.2.
 let player_color = red
 let gravity = Vector2.vec2 0. 2000.
@@ -21,6 +23,8 @@ let shockwave_impact = 2000.0
 let shockwave_color = green
 let explosion_duration = 0.25
 let platform_color = blue
+let health_bar_padding = 50.
+let health_bar_girth = 20.
 
 let platforms: Rectangle.t list =
   let s = 100. in
@@ -52,6 +56,7 @@ let fresh (): Game.t =
   ; mov = scalar 0.
   ; projs = []
   ; explosions = []
+  ; health = 1.
   }
 
 let spawn_projectile (game: Game.t) (pos: Vector2.t) (vel: Vector2.t): Game.t =
@@ -109,21 +114,21 @@ let update (dt: float) (game: Game.t): Game.t =
 
   (* Computable parameters of the game *)
   let res = ivec2 (get_render_width ()) (get_render_height ()) in
-  let dome_center = game.pos -^ vec2 0. tank_height in
 
-  let camera: Camera2D.t =
-    { offset = ~^ (dome_center  -^ res/^scalar 2.)
+  let dome_center pos =
+    pos -^ vec2 0. tank_height
+  in
+
+  let camera (pos: Vector2.t) : Camera2D.t =
+    { offset = ~^ (pos  -^ res/^scalar 2.)
     ; zoom = 1.
     }
   in
 
   let mouse_screen = ivec2 (get_mouse_x ()) (get_mouse_y ()) in
-  let mouse_world = get_screen_to_world2d mouse_screen camera in
+  let mouse_world = get_screen_to_world2d mouse_screen (game.pos |> dome_center |> camera) in
 
-  (* Printf.printf "%f %f\n" mouse_world.x mouse_world.y; *)
-  (* flush stdout; *)
-
-  let gun_rotation_rads = dir (mouse_world -^ dome_center) in
+  let gun_rotation_rads = dir (mouse_world -^ (dome_center game.pos)) in
   let gun_rotation_degrees = gun_rotation_rads/.Float.pi*.180.0 in
 
   (* Tank Controls *)
@@ -145,7 +150,7 @@ let update (dt: float) (game: Game.t): Game.t =
         in
         let open Vector2 in
         let gun_tip: Vector2.t =
-          gun_dir *^ scalar gun_length +^ dome_center
+          gun_dir *^ scalar gun_length +^ (dome_center game.pos)
         in
         let proj_vel: Vector2.t =
           gun_dir *^ scalar projectile_speed
@@ -221,9 +226,9 @@ let update (dt: float) (game: Game.t): Game.t =
   let alive_projs = new_projs |> List.filter (fun (proj: Game.Projectile.t) -> proj.lifetime > 0.) in
   let dead_projs = new_projs |> List.filter (fun (proj: Game.Projectile.t) -> proj.lifetime <= 0.) in
   let game = { game with projs = alive_projs } in
-  let exploded_projectile_force (proj: Game.Projectile.t): Vector2.t =
+  let exploded_projectile_force (pos: Vector2.t) (proj: Game.Projectile.t): Vector2.t =
     let open Vector2 in
-    let direction = dome_center -^ proj.pos in
+    let direction = dome_center pos -^ proj.pos in
     let distance = mag direction in
     if distance > shockwave_distance then
       { x = 0.; y = 0.}
@@ -235,11 +240,15 @@ let update (dt: float) (game: Game.t): Game.t =
   let force =
     let open Vector2 in
     dead_projs
-    |> List.map exploded_projectile_force
+    |> List.map (exploded_projectile_force game.pos)
     |> List.fold_left (+^) (scalar 0.)
   in
-  let game = { game with vel = game.vel +^ force } in
-
+  let game = { game with vel = game.vel +^ force
+                       ; health = if (mag force) > 1.
+                                  then max (game.health -. 0.1) 0.
+                                  else game.health
+             }
+  in
   let game =
     let explosion_from_proj (proj: Game.Projectile.t): Game.Explosion.t =
       { pos = proj.pos
@@ -265,7 +274,7 @@ let update (dt: float) (game: Game.t): Game.t =
   begin_drawing ();
     let background = { r = 0x18; g = 0x18; b = 0x18; a = 0xFF } in
     clear_background background;
-    begin_mode_2d camera;
+    begin_mode_2d (game.pos |> dome_center |> camera);
       game.projs
       |> List.iter (fun (proj: Game.Projectile.t) ->
              let x = proj.pos.x |> int_of_float in
@@ -285,6 +294,29 @@ let update (dt: float) (game: Game.t): Game.t =
            let w = platform.width |> int_of_float in
            let h = platform.height |> int_of_float in
            draw_rectangle x y w h platform_color);
+      let () =
+        let health_pos =
+          (game.pos |> dome_center)
+          -^ vec2 0. dome_radius
+          -^ vec2 0. health_bar_padding
+          -^ vec2 (tank_width/.2.) 0.
+          -^ vec2 0. (health_bar_girth/.2.)
+        in
+        let () =
+          let x = health_pos.x |> int_of_float in
+          let y = health_pos.y |> int_of_float in
+          let w = tank_width |> int_of_float in
+          let h = health_bar_girth |> int_of_float in
+          draw_rectangle x y w h gray
+        in ();
+        let () =
+          let x = health_pos.x |> int_of_float in
+          let y = health_pos.y |> int_of_float in
+          let w = (tank_width *. game.health) |> int_of_float in
+          let h = health_bar_girth |> int_of_float in
+          draw_rectangle x y w h red
+        in ()
+      in ();
     end_mode_2d ();
   end_drawing ();
   game
