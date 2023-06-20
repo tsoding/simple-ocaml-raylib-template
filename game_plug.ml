@@ -119,10 +119,10 @@ let update (dt: float) (game: Game.t): Game.t =
         in
         let open Vector2 in
         let gun_tip: Vector2.t =
-          scalar gun_length *^ gun_dir +^ dome_center
+          gun_dir *^ scalar gun_length +^ dome_center
         in
         let proj_vel: Vector2.t =
-          scalar gun_length *^ scalar projectile_speed
+          gun_dir *^ scalar projectile_speed
         in
         spawn_projectile game gun_tip proj_vel
       else game
