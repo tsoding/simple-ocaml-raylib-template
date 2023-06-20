@@ -117,11 +117,12 @@ let update (dt: float) (game: Game.t): Game.t =
           ; y = sin gun_rotation_rads
           }
         in
+        let open Vector2 in
         let gun_tip: Vector2.t =
-          gun_dir |> Vector2.scale gun_length |> Vector2.add dome_center
+          scalar gun_length *^ gun_dir +^ dome_center
         in
         let proj_vel: Vector2.t =
-          gun_dir |> Vector2.scale projectile_speed
+          scalar gun_length *^ scalar projectile_speed
         in
         spawn_projectile game gun_tip proj_vel
       else game
@@ -212,11 +213,14 @@ let update (dt: float) (game: Game.t): Game.t =
         ; y = dy/.(d +. 0.001)
         }
       in
-      normal |> Vector2.scale (shockwave_impact *. s)
+      let open Vector2 in
+      normal *^ scalar (shockwave_impact *. s)
   in
-  let force = dead_projs
-              |> List.map exploded_projectile_force
-              |> List.fold_left Vector2.add Vector2.zero
+  let force =
+    let open Vector2 in
+    dead_projs
+    |> List.map exploded_projectile_force
+    |> List.fold_left (+^) (scalar 0.)
   in
   let game = { game with dx = game.dx +. force.x
                        ; dy = game.dy +. force.y
