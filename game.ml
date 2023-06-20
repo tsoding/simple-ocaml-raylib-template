@@ -10,6 +10,13 @@ module Projectile = struct
     }
 end
 
+module Explosion = struct
+  type t =
+    { position: Vector2.t
+    ; progress: float
+    }
+end
+
 type t =
   { x: float
   ; y: float
@@ -17,6 +24,7 @@ type t =
   ; dy: float
   ; mx: float
   ; projs: Projectile.t list
+  ; explosions: Explosion.t list
   }
 
 type plug_t =

@@ -19,6 +19,8 @@ let projectile_color = green
 let projectile_lifetime = 1.10
 let shockwave_distance = 500.
 let shockwave_impact = 2000.0
+let shockwave_color = green
+let explosion_duration = 0.25
 
 let fresh (width: int) (height: int): Game.t =
   { x = (float_of_int width)/.2.
@@ -27,6 +29,7 @@ let fresh (width: int) (height: int): Game.t =
   ; dy = 100.
   ; mx = 0.
   ; projs = []
+  ; explosions = []
   }
 
 let spawn_projectile (game: Game.t) (position: Vector2.t) (velocity: Vector2.t): Game.t =
@@ -39,6 +42,10 @@ let spawn_projectile (game: Game.t) (position: Vector2.t) (velocity: Vector2.t):
     }
   in
   { game with projs = new_proj :: game.projs }
+
+let spawn_explosion (game: Game.t) (position: Vector2.t): Game.t =
+  let new_explosion: Game.Explosion.t = { position; progress = 1. } in
+  { game with explosions = new_explosion :: game.explosions }
 
 let render_gun (pivot: Vector2.t) (rotation: float): unit =
   let rectangle: Rectangle.t =
@@ -71,6 +78,7 @@ let render_tank (position: Vector2.t) (rotation: float): unit =
   render_gun dome_center rotation
 
 let update (dt: float) (game: Game.t): Game.t =
+  (* Computable parameters of the game *)
   let mouse_x = get_mouse_x () |> float_of_int in
   let mouse_y = get_mouse_y () |> float_of_int in
   let width = get_render_width () |> float_of_int in
@@ -91,64 +99,83 @@ let update (dt: float) (game: Game.t): Game.t =
     atan2 vy vx
   in
   let gun_rotation_degrees = gun_rotation_rads/.Float.pi*.180.0 in
+
+  (* Tank Controls *)
   let game =
-    if ' ' |> Char.code |> is_key_pressed then
-      { game with dy = game.dy -. jump_y
-      }
-    else if 'Q' |> Char.code |> is_key_pressed then
-      fresh (get_render_width ()) (get_render_height ())
-    else
-      game
+    (* Reset the state of the game *)
+    let game =
+      if 'Q' |> Char.code |> is_key_pressed
+      then fresh (get_render_width ()) (get_render_height ())
+      else game
+    in
+
+    (* Shooting projectile *)
+    let game =
+      if is_mouse_button_pressed 0 then
+        let gun_dir: Vector2.t =
+          { x = cos gun_rotation_rads
+          ; y = sin gun_rotation_rads
+          }
+        in
+        let gun_tip: Vector2.t =
+          gun_dir |> Vector2.scale gun_length |> Vector2.add dome_center
+        in
+        let proj_vel: Vector2.t =
+          gun_dir |> Vector2.scale projectile_speed
+        in
+        spawn_projectile game gun_tip proj_vel
+      else game
+    in
+
+    (* Moving left *)
+    let game =
+      if 'A' |> Char.code |> is_key_down then
+        { game with mx = -.move_speed }
+      else
+        { game with mx = 0. }
+    in
+
+    (* Moving right *)
+    let game =
+      if 'D' |> Char.code |> is_key_down then
+        { game with mx = game.mx +. move_speed }
+      else game
+    in
+    game
   in
+
+  (* Tank Physics *)
   let game =
-    if is_mouse_button_pressed 0 then
-      let gun_dir: Vector2.t =
-        { x = cos gun_rotation_rads
-        ; y = sin gun_rotation_rads
-        }
-      in
-      let gun_tip: Vector2.t =
-        gun_dir |> Vector2.scale gun_length |> Vector2.add dome_center
-      in
-      let proj_vel: Vector2.t =
-        gun_dir |> Vector2.scale projectile_speed
-      in
-      spawn_projectile game gun_tip proj_vel
-    else game
+    let game = { game with dx = game.dx +. gx*.dt
+                         ; dy = game.dy +. gy*.dt } in
+
+    let nx = game.x +. (game.dx +. game.mx)*.dt in
+    let ny = game.y +. game.dy*.dt in
+
+    let game =
+      if nx -. tank_width/.2. < 0. || nx +. tank_width/.2. >= width
+      then { game with dx = -.dampening*.game.dx }
+      else { game with x = nx }
+    in
+
+    let game =
+      if ny -. tank_height < 0.
+      then { game with dy = -.dampening*.game.dy }
+      else { game with y = ny }
+    in
+
+    let game =
+      if ny >= height
+      then { game with y = height
+                     ; dy = 0.
+                     ; dx = friction*.game.dx }
+      else game
+    in
+
+    game
   in
-  let game =
-    if 'A' |> Char.code |> is_key_down then
-      { game with mx = -.move_speed }
-    else
-      { game with mx = 0. }
-  in
-  let game =
-    if 'D' |> Char.code |> is_key_down then
-      { game with mx = game.mx +. move_speed }
-    else game
-  in
-  let game = { game with dx = game.dx +. gx*.dt
-                       ; dy = game.dy +. gy*.dt } in
-  let nx = game.x +. (game.dx +. game.mx)*.dt in
-  let ny = game.y +. game.dy*.dt in
-  let game =
-    if nx -. tank_width/.2. < 0. || nx +. tank_width/.2. >= width
-    then { game with dx = -.dampening*.game.dx }
-    else { game with x = nx }
-  in
-  let game =
-    if ny -. tank_height < 0.
-    then { game with dy = -.dampening*.game.dy }
-    else { game with y = ny }
-  in
-  let game =
-    if ny >= height
-    then { game with y = height
-                   ; dy = 0.
-                   ; dx = friction*.game.dx }
-    else game
-  in
-  let update_proj (proj: Game.Projectile.t) =
+
+  let update_proj (proj: Game.Projectile.t): Game.Projectile.t =
     let proj = { proj with dx = proj.dx +. gx*.dt
                          ; dy = proj.dy +. gy*.dt }
     in
@@ -171,8 +198,8 @@ let update (dt: float) (game: Game.t): Game.t =
   let new_projs = game.projs |> List.map update_proj in
   let alive_projs = new_projs |> List.filter (fun (proj: Game.Projectile.t) -> proj.lifetime > 0.) in
   let dead_projs = new_projs |> List.filter (fun (proj: Game.Projectile.t) -> proj.lifetime <= 0.) in
-  let game = { game with projs = alive_projs} in
-  let f (proj: Game.Projectile.t): Vector2.t =
+  let game = { game with projs = alive_projs } in
+  let exploded_projectile_force (proj: Game.Projectile.t): Vector2.t =
     let dx = dome_center.x -. proj.x in
     let dy = dome_center.y -. proj.y in
     let d = sqrt (dx*.dx +. dy*.dy) in
@@ -188,22 +215,51 @@ let update (dt: float) (game: Game.t): Game.t =
       normal |> Vector2.scale (shockwave_impact *. s)
   in
   let force = dead_projs
-              |> List.map f
+              |> List.map exploded_projectile_force
               |> List.fold_left Vector2.add Vector2.zero
   in
-  let game = {game with dx = game.dx +. force.x
-                      ; dy = game.dy +. force.y
+  let game = { game with dx = game.dx +. force.x
+                       ; dy = game.dy +. force.y
              }
   in
+
+  let game =
+    let explosion_from_proj (proj: Game.Projectile.t): Game.Explosion.t =
+      { position = { x = proj.x; y = proj.y }
+      ; progress = 1.
+      }
+    in
+    let update_explosion (explosion: Game.Explosion.t): Game.Explosion.t =
+      { explosion with progress = (explosion_duration*.explosion.progress -. dt)/.explosion_duration }
+    in
+    let is_explosion_alive (explosion: Game.Explosion.t): bool =
+      explosion.progress > 0.
+    in
+    let new_explosions = dead_projs |> List.map explosion_from_proj in
+    { game with explosions =
+                  game.explosions
+                  |> List.map update_explosion
+                  |> List.filter is_explosion_alive
+                  |> List.append new_explosions
+    }
+  in
+
+  (* Rendering the state of the game *)
   begin_drawing ();
   let background = { r = 0x18; g = 0x18; b = 0x18; a = 0xFF } in
   clear_background background;
-  render_tank tank_position gun_rotation_degrees;
   game.projs
   |> List.iter (fun (proj: Game.Projectile.t) ->
          let x = proj.x |> int_of_float in
          let y = proj.y |> int_of_float in
          draw_circle x y projectile_radius projectile_color);
+  game.explosions
+  |> List.iter (fun (explosion: Game.Explosion.t) ->
+       let x = explosion.position.x |> int_of_float in
+       let y = explosion.position.y |> int_of_float in
+       let r = shockwave_distance*.0.5*.explosion.progress in
+       draw_circle x y r shockwave_color);
+  render_tank tank_position gun_rotation_degrees;
   end_drawing ();
   game
 
