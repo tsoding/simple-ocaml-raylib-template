@@ -5,12 +5,9 @@ type color =
   ; a: int
   }
 
-let red: color =
-  { r = 230
-  ; g = 41
-  ; b = 55
-  ; a = 255
-  }
+let red = { r = 230 ; g = 41 ; b = 55 ; a = 255 }
+let green = { r = 0 ; g = 228 ; b = 48 ; a = 255 }
+let blue = { r = 0 ; g = 121 ; b = 241 ; a = 255 }
 
 module Vector2 = struct
   type t = { x: float; y: float }

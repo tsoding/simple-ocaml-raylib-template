@@ -1,19 +1,5 @@
 open Raylib
 
-let green =
-  { r = 0
-  ; g = 228
-  ; b = 48
-  ; a = 255
-  }
-
-let blue =
-  { r = 0
-  ; g = 121
-  ; b = 241
-  ; a = 255
-  }
-
 let player_size = 100./.2.
 let player_color = red
 let gy = 2000.0
