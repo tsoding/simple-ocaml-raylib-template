@@ -16,11 +16,9 @@ module Explosion = struct
 end
 
 type t =
-  { x: float
-  ; y: float
-  ; dx: float
-  ; dy: float
-  ; mx: float
+  { pos: Vector2.t
+  ; vel: Vector2.t
+  ; mov: Vector2.t
   ; projs: Projectile.t list
   ; explosions: Explosion.t list
   }
