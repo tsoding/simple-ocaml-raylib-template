@@ -3,4 +3,5 @@
 *.cmo
 *.cmx
 game
+game.opt
 *.so
