@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+printf "clang
+-I%s
+" $(ocamlc -where) | tee .ccls
+
+printf "CompileFlags:
+  Add: [-I%s]
+" $(ocamlc -where) | tee .clangd
