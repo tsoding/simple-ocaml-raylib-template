@@ -120,8 +120,8 @@ let update (dt: float) (game: Game.t): Game.t =
   in
 
   let camera (pos: Vector2.t) : Camera2D.t =
-    { offset = ~^ (pos  -^ res/^scalar 2.)
-    ; zoom = 1.
+    { offset = ~^ ((pos -^ res) *^ scalar 0.5)
+    ; zoom = 0.5
     }
   in
 
